@@ -1,0 +1,10 @@
+version: '2'
+services:
+  awscurl:
+    image: allthings/awscurl
+    build: .
+    network_mode: bridge
+    environment:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_SECURITY_TOKEN
