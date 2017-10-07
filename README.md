@@ -3,10 +3,8 @@
 with a [curl](https://curl.haxx.se/docs/manpage.html) like API.
 
 ## Setup
-Set the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables.
-Also set the `AWS_SECURITY_TOKEN` environment variable when using the
-[AWS Security Token Service](http://docs.aws.amazon.com/STS/latest/APIReference/Welcome.html).
 
+### Docker alias
 Define an alias for the docker based `awscurl` command:
 
 ```sh
@@ -17,13 +15,34 @@ alias awscurl='docker run --rm '\
 allthings/awscurl
 ```
 
+### OS dependent binary
+Download one of the OS dependent
+[release files](https://github.com/allthings/awscurl/releases), save it as
+`/usr/local/bin/awscurl` and make it executable with
+`chmod +x /usr/local/bin/awscurl`.
+
 ## Usage
+
+### Environment variables
+Set the following
+[AWS CLI environment variables](http://docs.aws.amazon.com/cli/latest/userguide/cli-environment.html):
+* `AWS_ACCESS_KEY_ID`
+* `AWS_SECRET_ACCESS_KEY`
+* `AWS_SECURITY_TOKEN` (optional)
+
+`AWS_SECURITY_TOKEN` (= `AWS_SESSION_TOKEN`) is only required when using the
+[AWS Security Token Service](http://docs.aws.amazon.com/STS/latest/APIReference/Welcome.html).
+
+The recommended way to store and provide AWS CLI credentials is by using
+[aws-vault](https://github.com/99designs/aws-vault).
+
+### Options
 
 ```sh
 awscurl [-X request_method] [-H header:value] [-d post_data] URL
 ```
 
-## Example
+### Example
 
 ```sh
 awscurl -X POST -H x-api-key:example -d '{"data":"example"}' \
@@ -32,8 +51,30 @@ awscurl -X POST -H x-api-key:example -d '{"data":"example"}' \
 
 ## Build
 
+### Docker image
+
 ```sh
 docker-compose build
+```
+
+### OS dependent binaries
+
+```sh
+make
+```
+
+## Release
+Create a
+[GitHub personal access token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/)
+with `repo` scope and set it as `GITHUB_TOKEN` environment variable.
+
+Commit your changes, create a git tag and execute `make` to cross-compile the
+binaries.
+
+Then execute the following to release the binaries on GitHub:
+
+```sh
+./github-release.sh awscurl-*
 ```
 
 ## License

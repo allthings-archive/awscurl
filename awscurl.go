@@ -12,6 +12,9 @@ import (
 	awsauth "github.com/allthings/go-aws-auth"
 )
 
+// Version is provided at compile time:
+var Version = "dev"
+
 type arrayFlags []string
 
 func (flags *arrayFlags) Set(value string) error {
@@ -29,10 +32,15 @@ func (flags *arrayFlags) String() string {
 
 func main() {
 	var headers arrayFlags
+	displayVersion := flag.Bool("v", false, "Display program version")
 	requestMethod := flag.String("X", "GET", "HTTP request method")
 	data := flag.String("d", "", "HTTP POST data")
 	flag.Var(&headers, "H", "HTTP header (key:value)")
 	flag.Parse()
+	if *displayVersion {
+		fmt.Println(Version)
+		os.Exit(0)
+	}
 	args := flag.Args()
 	if len(args) == 0 {
 		fmt.Println("Error: Missing URL parameter")
