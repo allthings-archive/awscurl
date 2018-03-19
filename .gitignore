@@ -1,3 +1,2 @@
-.DS_Store
-awscurl
-awscurl-*
+/vendor
+/awscurl-*-*

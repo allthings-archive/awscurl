@@ -50,17 +50,36 @@ awscurl -X POST -H x-api-key:example -d '{"data":"example"}' \
 ```
 
 ## Build
-
-### Docker image
-
-```sh
-docker-compose build
-```
-
-### OS dependent binaries
+To cross-compile binaries for Linux, MacOS and Window, execute the following:
 
 ```sh
 make
+```
+
+The locally built binary can be installed at `$GOPATH/bin/awscurl` with the
+following command:
+
+```sh
+make install
+```
+
+The uninstall command removes the binary from `$GOPATH/bin/awscurl`:
+
+```sh
+make uninstall
+```
+
+To clean up all build artifacts, run the following:
+
+```sh
+make clean
+```
+
+## Docker build
+To build the Docker image, run the following:
+
+```sh
+make docker
 ```
 
 ## Release
@@ -74,7 +93,7 @@ binaries.
 Then execute the following to release the binaries on GitHub:
 
 ```sh
-./github-release.sh awscurl-*
+make release
 ```
 
 ## License

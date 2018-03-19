@@ -1,29 +1,93 @@
-# The binary name (without OS and ARCH suffixes):
-BIN=awscurl
+# --- Variables ---
+
+# The project and binary name (without OS and ARCH suffixes):
+PROJECT=awscurl
+
 # Use the git tag for the current commit as version or "dev" as fallback:
-VERSION=$(shell git describe --exact-match --tags 2> /dev/null || echo dev)
-# Set the version, strip debug symbols and disable DWARF generation:
-FLAGS=-X main.Version=$(VERSION) -s -w
-# List all go source files, used to determine if make needs to rebuild targets:
-SRC=$(shell find . -name '*.go')
-# Determine the dependencies excluding those from the standard library:
-DEPS=$(shell \
-(go list -f '{{join .Deps "\n"}}' .;go list std;go list std) \
-| sort | uniq -u | sed -e 's|^|$(GOPATH)/src/|;s| |\\&|g')
+GET_VERSION=git describe --exact-match --tags 2> /dev/null || echo dev
 
-all: $(BIN)-linux-amd64 $(BIN)-darwin-amd64 $(BIN)-windows-386.exe
+# Set the version on demand, strip debug symbols and disable DWARF generation:
+LD_FLAGS=-X main.Version=$$($(GET_VERSION)) -s -w
 
-$(DEPS):
-	go get -d ./...
+# The import path of the package:
+IMPORT_PATH = github.com/allthings/$(PROJECT)
 
-$(BIN)-linux-amd64: $(DEPS) $(SRC)
-	GOOS=linux GOARCH=amd64 go build -o $@ -ldflags="$(FLAGS)" .
+# The absolute package path:
+PKG_PATH = $(GOPATH)/src/$(IMPORT_PATH)
 
-$(BIN)-darwin-amd64: $(DEPS) $(SRC)
-	GOOS=darwin GOARCH=amd64 go build -o $@ -ldflags="$(FLAGS)" .
+# The absolute path for the binary installation:
+BIN_PATH = $(GOPATH)/bin/$(PROJECT)
 
-$(BIN)-windows-386.exe: $(DEPS) $(SRC)
-	GOOS=windows GOARCH=386 go build -o $@ -ldflags="$(FLAGS)" .
+# Dependencies to build the binary:
+DEPS = $(PKG_PATH) vendor $(PROJECT).go
 
+
+# --- Main targets ---
+
+# The default target builds binaries for all platforms:
+all: $(PROJECT)-linux-amd64 $(PROJECT)-darwin-amd64 $(PROJECT)-windows-386.exe
+
+# Runs the unit tests:
+test:
+	@go test .
+
+# Installs the binary in $GOPATH/bin/:
+install: $(BIN_PATH)
+
+# Deletes the binary from $GOPATH/bin/:
+uninstall:
+	rm -f $(BIN_PATH)
+
+# Builds the Docker image:
+docker:
+	docker-compose build
+
+# Releases the binaries on GitHub:
+release: all
+	./github-release.sh $(PROJECT)-*-*
+
+# Removes all build artifacts:
 clean:
-	rm -f $(BIN)-*-*
+	rm -f $(PROJECT)-*-*
+
+
+# --- Helper targets ---
+
+# Defines phony targets (targets without a corresponding target file):
+.PHONY: \
+	all \
+	test \
+	install \
+	uninstall \
+	docker \
+	release \
+	clean
+
+# Creates a symlink from the project import path to this directory.
+# This allows working with a project outside of $GOPATH:
+$(PKG_PATH):
+	mkdir -p $@; cd $@/..; rm -rf $(PROJECT); ln -s '$(PWD)'
+
+# Installs the binary at $GOPATH/bin/:
+$(BIN_PATH): $(DEPS)
+	cd $(PKG_PATH); go install
+
+# Install dependencies via `dep ensure` if available, else via `go get`:
+vendor: $(PKG_PATH)
+	if command -v dep > /dev/null 2>&1; then cd $(PKG_PATH); dep ensure; \
+		else go get -d ./... && mkdir vendor; fi
+
+# Builds the Linux binary:
+$(PROJECT)-linux-amd64: $(DEPS)
+	cd $(PKG_PATH); \
+		GOOS=linux GOARCH=amd64 go build -ldflags="$(LD_FLAGS)" -o $@ .
+
+# Builds the MacOS binary:
+$(PROJECT)-darwin-amd64: $(DEPS)
+	cd $(PKG_PATH); \
+		GOOS=darwin GOARCH=amd64 go build -ldflags="$(LD_FLAGS)" -o $@ .
+
+# Builds the Windows binary:
+$(PROJECT)-windows-386.exe: $(DEPS)
+	cd $(PKG_PATH); \
+		GOOS=windows GOARCH=386 go build -ldflags="$(LD_FLAGS)" -o $@ .

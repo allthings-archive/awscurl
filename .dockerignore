@@ -1,2 +1,4 @@
 *
 !awscurl.go
+!Gopkg.lock
+!Gopkg.toml
