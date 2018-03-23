@@ -9,17 +9,11 @@ GET_VERSION=git describe --exact-match --tags 2> /dev/null || echo dev
 # Set the version on demand, strip debug symbols and disable DWARF generation:
 LD_FLAGS=-X main.Version=$$($(GET_VERSION)) -s -w
 
-# The import path of the package:
-IMPORT_PATH = github.com/allthings/$(PROJECT)
-
-# The absolute package path:
-PKG_PATH = $(GOPATH)/src/$(IMPORT_PATH)
-
 # The absolute path for the binary installation:
 BIN_PATH = $(GOPATH)/bin/$(PROJECT)
 
 # Dependencies to build the binary:
-DEPS = $(PKG_PATH) vendor $(PROJECT).go
+DEPS = vendor $(PROJECT).go
 
 
 # --- Main targets ---
@@ -63,31 +57,23 @@ clean:
 	release \
 	clean
 
-# Creates a symlink from the project import path to this directory.
-# This allows working with a project outside of $GOPATH:
-$(PKG_PATH):
-	mkdir -p $@; cd $@/..; rm -rf $(PROJECT); ln -s '$(PWD)'
-
 # Installs the binary at $GOPATH/bin/:
 $(BIN_PATH): $(DEPS)
-	cd $(PKG_PATH); go install
+	go install .
 
 # Install dependencies via `dep ensure` if available, else via `go get`:
-vendor: $(PKG_PATH)
-	if command -v dep > /dev/null 2>&1; then cd $(PKG_PATH); dep ensure; \
+vendor:
+	if command -v dep > /dev/null 2>&1; then dep ensure; \
 		else go get -d ./... && mkdir vendor; fi
 
 # Builds the Linux binary:
 $(PROJECT)-linux-amd64: $(DEPS)
-	cd $(PKG_PATH); \
-		GOOS=linux GOARCH=amd64 go build -ldflags="$(LD_FLAGS)" -o $@ .
+	GOOS=linux GOARCH=amd64 go build -ldflags="$(LD_FLAGS)" -o $@ .
 
 # Builds the MacOS binary:
 $(PROJECT)-darwin-amd64: $(DEPS)
-	cd $(PKG_PATH); \
-		GOOS=darwin GOARCH=amd64 go build -ldflags="$(LD_FLAGS)" -o $@ .
+	GOOS=darwin GOARCH=amd64 go build -ldflags="$(LD_FLAGS)" -o $@ .
 
 # Builds the Windows binary:
 $(PROJECT)-windows-386.exe: $(DEPS)
-	cd $(PKG_PATH); \
-		GOOS=windows GOARCH=386 go build -ldflags="$(LD_FLAGS)" -o $@ .
+	GOOS=windows GOARCH=386 go build -ldflags="$(LD_FLAGS)" -o $@ .

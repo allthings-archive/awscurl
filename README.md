@@ -50,6 +50,13 @@ awscurl -X POST -H x-api-key:example -d '{"data":"example"}' \
 ```
 
 ## Build
+First, clone the project via `go get` and then switch into its source directory:
+
+```sh
+go get github.com/allthings/awscurl
+cd "$GOPATH/src/github.com/allthings/awscurl"
+```
+
 To cross-compile binaries for Linux, MacOS and Window, execute the following:
 
 ```sh
@@ -87,10 +94,8 @@ Create a
 [GitHub personal access token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/)
 with `repo` scope and set it as `GITHUB_TOKEN` environment variable.
 
-Commit your changes, create a git tag and execute `make` to cross-compile the
-binaries.
-
-Then execute the following to release the binaries on GitHub:
+Commit your changes, create a git tag and then execute the following to release
+the binaries on GitHub:
 
 ```sh
 make release
